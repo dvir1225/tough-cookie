@@ -541,4 +541,42 @@ vows
       }
     }
   })
+  .addBatch({
+    "Fix Prototype Pollution": {
+      "Setting a polluted cookie with the domain __proto__": {
+        topic: function() {
+          const jar = new tough.CookieJar(undefined, {
+            rejectPublicSuffixes: false
+          });
+          jar.setCookieSync(
+            "Cookie=polluted; Domain=__proto__; Path=/prototypePolluted",
+            "https://__proto__/admin"
+          );
+          this.callback();
+        },
+        "does not affect the Object prototype": function() {
+          const pollutedObject = {};
+          assert(pollutedObject["/notauth"] === undefined);
+        }
+      },
+      "Setting a polluted cookie with the domain __proto__ and path of 'assign'": {
+        topic: function() {
+          const jar = new tough.CookieJar(undefined, {
+            rejectPublicSuffixes: false
+          });
+          const objectAssign = Object.assign;
+          jar.setCookieSync(
+            "Cookie=polluted; Domain=__proto__; Path=assign",
+            "https://__proto__/admin"
+          );
+          
+          return objectAssign;
+        },
+        "does not affect the 'assign' method of the Object prototype": function(objectAssign) {
+          assert.strictEqual(objectAssign, Object.assign);
+        }
+      },
+    }
+  })
+
   .export(module);
